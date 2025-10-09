@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>120FPS Unlocker | PUBG Mobile</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <i class="fas fa-gamepad logo-icon"></i>
+                <h1>120FPS Unlocker</h1>
+            </div>
+            <p class="subtitle">Unlock 120 FPS in PUBG Mobile for your device</p>
+        </header>
+
+        <div class="main-content">
+            <div class="card">
+                <h2 class="card-title"><i class="fas fa-mobile-alt"></i> Device Information</h2>
+                <div class="info-section">
+                    <div class="info-item">
+                        <i class="fas fa-info-circle"></i>
+                        <div>
+                            <h3>How it works</h3>
+                            <p>We replace a device ID in the game configuration with your device model to enable 120 FPS.</p>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-search"></i>
+                        <div>
+                            <h3>Device Detection</h3>
+                            <p>The system automatically finds a device ID with matching length in the configuration.</p>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-cogs"></i>
+                        <div>
+                            <h3>Processing</h3>
+                            <p>We download, modify, and repack the PAK file with your device information.</p>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-download"></i>
+                        <div>
+                            <h3>Download</h3>
+                            <p>Get your custom PAK file after processing and follow installation instructions.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="features-grid">
+                    <div class="feature">
+                        <i class="fas fa-bolt feature-icon"></i>
+                        <h3>High Performance</h3>
+                        <p>Experience smoother gameplay with 120 FPS</p>
+                    </div>
+                    <div class="feature">
+                        <i class="fas fa-shield-alt feature-icon"></i>
+                        <h3>Safe & Secure</h3>
+                        <p>No modifications to game logic</p>
+                    </div>
+                    <div class="feature">
+                        <i class="fas fa-sync-alt feature-icon"></i>
+                        <h3>Auto Update</h3>
+                        <p>Works with latest game version</p>
+                    </div>
+                    <div class="feature">
+                        <i class="fas fa-mobile feature-icon"></i>
+                        <h3>Device Specific</h3>
+                        <p>Customized for your device model</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2 class="card-title"><i class="fas fa-tools"></i> Generate 120FPS File</h2>
+                <div class="device-input">
+                    <div class="input-group">
+                        <i class="fas fa-mobile-alt"></i>
+                        <input type="text" id="deviceModel" placeholder="Enter your device model (e.g., SM-G998B)">
+                    </div>
+                    <button id="processBtn" class="btn">
+                        <i class="fas fa-cog"></i> Generate 120FPS File
+                    </button>
+
+                    <div>
+                        <p>Try these examples:</p>
+                        <div class="examples">
+                            <div class="example-chip" data-model="SM-G998B">SM-G998B</div>
+                            <div class="example-chip" data-model="CPH2613">CPH2613</div>
+                            <div class="example-chip" data-model="RMX5011">RMX5011</div>
+                            <div class="example-chip" data-model="ASUS_AI2205">ASUS_AI2205</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="progress-container" id="progressContainer">
+                    <h3 id="progressStatus">Processing your request...</h3>
+                    <div class="progress-bar">
+                        <div class="progress" id="progressBar"></div>
+                    </div>
+                    <div class="progress-steps">
+                        <div class="step active" id="step1">
+                            <div class="step-icon"><i class="fas fa-download"></i></div>
+                            <span>Downloading</span>
+                        </div>
+                        <div class="step" id="step2">
+                            <div class="step-icon"><i class="fas fa-search"></i></div>
+                            <span>Finding Device</span>
+                        </div>
+                        <div class="step" id="step3">
+                            <div class="step-icon"><i class="fas fa-cogs"></i></div>
+                            <span>Modifying</span>
+                        </div>
+                        <div class="step" id="step4">
+                            <div class="step-icon"><i class="fas fa-file-archive"></i></div>
+                            <span>Packaging</span>
+                        </div>
+                        <div class="step" id="step5">
+                            <div class="step-icon"><i class="fas fa-check"></i></div>
+                            <span>Complete</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="download-section" id="downloadSection">
+                    <h3>Your 120FPS file is ready!</h3>
+                    <a class="btn download-btn" id="downloadLink">
+                        <i class="fas fa-download"></i> Download PAK File
+                    </a>
+                    
+                    <div class="instructions">
+                        <h4>Installation Instructions:</h4>
+                        <ol>
+                            <li>Extract the downloaded ZIP file</li>
+                            <li>Copy the <code>game_patch_4.0.0.20332.pak</code> file</li>
+                            <li>Navigate to: <code>/Android/data/com.tencent.ig/files/UE4Game/ShadowTrackerExtra/ShadowTrackerExtra/Saved/Paks/</code></li>
+                            <li>Replace the existing file (make a backup first!)</li>
+                            <li>Restart PUBG Mobile</li>
+                            <li>Enjoy 120 FPS gameplay!</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>120FPS Unlocker &copy; 2023 | This tool is for educational purposes only</p>
+        </footer>
+    </div>
+
+    <div class="notification-container" id="notificationContainer"></div>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
