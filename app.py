@@ -17,6 +17,13 @@ import time
 app = Flask(__name__)
 CORS(app)
 
+# Import the working repack module
+import sys
+sys.path.append('/app')  # Add current directory to path
+
+# We'll use the working TencentPAKFile class from our tool for repacking only
+from FIRST import TencentPAKFile
+
 # GitHub raw file URLs
 GITHUB_RAW_URL = "https://raw.githubusercontent.com/tikunakchibeta/doranda/main/"
 PAK_FILE_URL = GITHUB_RAW_URL + "game_patch_4.0.0.20332.pak"
@@ -104,7 +111,7 @@ def compress_by_mode(raw_bytes: bytes, mode: str) -> bytes:
         return bio.getvalue()
     return zlib.compress(raw_bytes, level=9)
 
-# ─── Device String Replacement ────────────────────────────────────────────────
+# ─── Device String Replacement (Keep your working method) ─────────────────────
 
 def extract_device_ids_from_uexp(content: bytes):
     """
@@ -187,31 +194,6 @@ def find_and_replace_device_by_length(content: bytes, device_name: str) -> tuple
 
     return content, False, None
 
-# ─── Main Processing ──────────────────────────────────────────────────────────
-
-def download_from_url(url, destination, job_id):
-    """Download a file from URL."""
-    filename = os.path.basename(destination)
-    processing_status[job_id]['status'] = f"Downloading {filename}..."
-    
-    try:
-        response = requests.get(url, stream=True, timeout=60)
-        if response.status_code == 200:
-            with open(destination, "wb") as file:
-                for chunk in response.iter_content(chunk_size=8192):
-                    if chunk:
-                        file.write(chunk)
-            print(f"✅ Downloaded: {filename}")
-            return True
-        else:
-            print(f"❌ Failed to download: {url} - Status code: {response.status_code}")
-            processing_status[job_id]['status'] = f"Failed to download {filename}"
-            return False
-    except Exception as e:
-        print(f"❌ Error downloading {url}: {str(e)}")
-        processing_status[job_id]['status'] = f"Error downloading {filename}: {str(e)}"
-        return False
-
 def find_compressed_uexp_in_decoded(decoded_data: bytes, uexp_content: bytes) -> tuple:
     """
     Find where the compressed version of uexp_content exists in decoded PAK data.
@@ -237,55 +219,90 @@ def find_compressed_uexp_in_decoded(decoded_data: bytes, uexp_content: bytes) ->
 
     return None, None, None
 
-def process_files(device_name: str, job_id: str):
+# ─── Main Processing with Tool Repack ─────────────────────────────────────────
+
+def download_from_url(url, destination, job_id):
+    """Download a file from URL."""
+    filename = os.path.basename(destination)
+    processing_status[job_id]['status'] = f"Downloading {filename}..."
+    
+    try:
+        response = requests.get(url, stream=True, timeout=60)
+        if response.status_code == 200:
+            with open(destination, "wb") as file:
+                for chunk in response.iter_content(chunk_size=8192):
+                    if chunk:
+                        file.write(chunk)
+            print(f"✅ Downloaded: {filename}")
+            return True
+        else:
+            print(f"❌ Failed to download: {url} - Status code: {response.status_code}")
+            processing_status[job_id]['status'] = f"Failed to download {filename}"
+            return False
+    except Exception as e:
+        print(f"❌ Error downloading {url}: {str(e)}")
+        processing_status[job_id]['status'] = f"Error downloading {filename}: {str(e)}"
+        return False
+
+def process_files_with_tool_repack(device_name: str, job_id: str):
     """
-    Main processing:
+    Main processing using your working 120FPS method + tool repack:
     1. Download PAK file
-    2. Download 000148.uexp file
-    3. Modify 000148.uexp with device string (length-matched)
-    4. Find and replace compressed uexp in PAK
-    5. Repack
+    2. Download 000148.uexp file  
+    3. Modify 000148.uexp with device string (your working method)
+    4. Use tool repack to apply the modification
     """
     try:
         os.makedirs(TEMP_DIR, exist_ok=True)
-        job_dir = os.path.join(TEMP_DIR, job_id)
-        os.makedirs(job_dir, exist_ok=True)
+        job_dir = Path(TEMP_DIR) / job_id
+        job_dir.mkdir(exist_ok=True)
 
-        # Download PAK file
-        processing_status[job_id]['status'] = "Downloading PAK file..."
+        # Create folder structure for tool
+        base_dir = job_dir / "FIRSTTOOL"
+        base_dir.mkdir(exist_ok=True)
+        
+        # Create required folders
+        folders = ['GAME_PATCH', 'MOD_UEXP', 'MODED_FILE']
+        subfolders = ['INPUT', 'OUTPUT']
+        
+        for folder in folders:
+            folder_path = base_dir / folder
+            folder_path.mkdir(exist_ok=True)
+            if folder == 'GAME_PATCH':
+                for sub in subfolders:
+                    (folder_path / sub).mkdir(exist_ok=True)
+        
+        (base_dir / 'MODED_FILE' / 'GAME_PATCH_MOD').mkdir(parents=True, exist_ok=True)
+
+        # Download PAK file to tool input folder
+        processing_status[job_id]['status'] = "Downloading game patch..."
         processing_status[job_id]['progress'] = 20
-        pak_file_path = os.path.join(job_dir, "game_patch_4.0.0.20332.pak")
+        
+        pak_file_path = base_dir / 'GAME_PATCH' / 'INPUT' / 'game_patch_4.0.0.20332.pak'
         if not download_from_url(PAK_FILE_URL, pak_file_path, job_id):
-            processing_status[job_id]['status'] = "Failed to download PAK file"
+            processing_status[job_id]['status'] = "Failed to download game patch"
             processing_status[job_id]['progress'] = 0
             return None
 
         # Download 000148.uexp file
         processing_status[job_id]['status'] = "Downloading device configuration..."
         processing_status[job_id]['progress'] = 40
-        uexp_file_path = os.path.join(job_dir, "000148.uexp")
+        
+        uexp_file_path = base_dir / '000148.uexp'
         if not download_from_url(UEXP_FILE_URL, uexp_file_path, job_id):
             processing_status[job_id]['status'] = "Failed to download device config"
             processing_status[job_id]['progress'] = 0
             return None
 
-        # Read original PAK file
-        processing_status[job_id]['status'] = "Decoding PAK file..."
-        processing_status[job_id]['progress'] = 50
-        with open(pak_file_path, "rb") as f:
-            original_pak_data = f.read()
-
-        decoded_data = xor_decode_with_feedback(original_pak_data)
-        print(f"✅ Decoded {len(decoded_data)} bytes")
-
-        # Read 000148.uexp
+        # Read original 000148.uexp
         with open(uexp_file_path, "rb") as f:
             uexp_content = f.read()
         print(f"✅ Loaded 000148.uexp ({len(uexp_content)} bytes)")
 
-        # Modify 000148.uexp with device string (length-matched replacement)
-        processing_status[job_id]['status'] = f"Finding device ID to replace with {device_name}..."
+        # Modify 000148.uexp with device string (your working method)
+        processing_status[job_id]['status'] = f"Adding 120FPS for {device_name}..."
         processing_status[job_id]['progress'] = 60
+        
         print(f"🔧 Modifying device string to: {device_name} ({len(device_name)} chars)")
         modified_uexp, replaced, old_device = find_and_replace_device_by_length(uexp_content, device_name)
 
@@ -297,57 +314,42 @@ def process_files(device_name: str, job_id: str):
 
         print(f"✅ Successfully replaced '{old_device}' with '{device_name}'")
 
-        # Find original compressed uexp in decoded PAK
-        processing_status[job_id]['status'] = "Finding compressed device config in PAK..."
-        processing_status[job_id]['progress'] = 70
-        print("🔍 Finding compressed 000148.uexp in PAK...")
-        pos, original_compressed, mode = find_compressed_uexp_in_decoded(decoded_data, uexp_content)
+        # Save modified uexp to MOD_UEXP folder with correct path structure
+        mod_uexp_path = base_dir / 'MOD_UEXP' / 'Content' / 'MultiRegion' / 'Content' / 'IN' / 'CSV' / 'Client120FPSMapping.uexp'
+        mod_uexp_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        with open(mod_uexp_path, "wb") as f:
+            f.write(modified_uexp)
+        print(f"✅ Saved modified 000148.uexp to MOD_UEXP folder")
 
-        if pos is None:
-            processing_status[job_id]['status'] = "Could not find compressed device config in PAK"
+        # Use tool repack to apply the modification
+        processing_status[job_id]['status'] = "Repacking with tool..."
+        processing_status[job_id]['progress'] = 80
+        
+        try:
+            print("🔄 Using tool repack...")
+            mod_folder = base_dir / 'MOD_UEXP'
+            output_pak = base_dir / 'MODED_FILE' / 'GAME_PATCH_MOD' / f"game_patch_4.0.0.20332_120fps.pak"
+            
+            # Use the proven repack method from the tool
+            pak_instance = TencentPAKFile(pak_file_path, is_od_pack=False)
+            pak_instance.repack(mod_folder, output_pak, "Game Patch with 120FPS")
+            print("✅ Tool repack complete!")
+        except Exception as e:
+            print(f"❌ Tool repack failed: {e}")
+            processing_status[job_id]['status'] = f"Failed to repack: {str(e)}"
             processing_status[job_id]['progress'] = 0
-            print("❌ Could not find compressed 000148.uexp in PAK")
             return None
 
-        # Compress modified uexp
-        processing_status[job_id]['status'] = "Compressing modified configuration..."
-        processing_status[job_id]['progress'] = 80
-        print(f"📦 Compressing modified 000148.uexp (mode: {mode})...")
-        modified_compressed = compress_by_mode(modified_uexp, mode)
-        print(f"   Original compressed size: {len(original_compressed)} bytes")
-        print(f"   Modified compressed size: {len(modified_compressed)} bytes")
-
-        # Check if sizes match (they should be very close)
-        if len(modified_compressed) > len(original_compressed):
-            print("⚠️  Warning: Modified compressed data is larger. Padding may be needed.")
-            modified_compressed = modified_compressed[:len(original_compressed)]
-        elif len(modified_compressed) < len(original_compressed):
-            padding = len(original_compressed) - len(modified_compressed)
-            modified_compressed += b'\x00' * padding
-            print(f"   Added {padding} bytes of padding")
-
-        # Replace in decoded PAK
-        processing_status[job_id]['status'] = "Replacing configuration in PAK..."
+        # Create ZIP file with the repacked PAK
+        processing_status[job_id]['status'] = "Creating download package..."
         processing_status[job_id]['progress'] = 90
-        print("🔄 Replacing compressed data in decoded PAK...")
-        decoded_modified = bytearray(decoded_data)
-        decoded_modified[pos:pos+len(original_compressed)] = modified_compressed
-
-        # Re-encode with XOR
-        print("🔐 Encoding final PAK...")
-        final_pak_data = xor_reencode_from_original(original_pak_data, bytes(decoded_modified))
-
-        # Save modified PAK
-        final_pak_path = os.path.join(job_dir, "game_patch_4.0.0.20332.pak")
-        with open(final_pak_path, "wb") as f:
-            f.write(final_pak_data)
-        print(f"✅ Saved modified PAK: {os.path.basename(final_pak_path)}")
-
-        # Create ZIP file
-        zip_file_path = os.path.join(job_dir, f"{device_name}_120FPS.zip")
+        
+        zip_file_path = job_dir / f"{device_name}_120FPS.zip"
         with zipfile.ZipFile(zip_file_path, "w", zipfile.ZIP_DEFLATED) as zipf:
-            zipf.write(final_pak_path, arcname="game_patch_4.0.0.20332.pak")
-        print(f"✅ Created ZIP: {os.path.basename(zip_file_path)}")
+            zipf.write(output_pak, arcname="game_patch_4.0.0.20332.pak")
+        
+        print(f"✅ Created ZIP: {zip_file_path.name}")
 
         processing_status[job_id]['status'] = "Complete!"
         processing_status[job_id]['progress'] = 100
@@ -393,7 +395,7 @@ def start_processing():
     }
     
     # Start processing in background thread
-    thread = threading.Thread(target=process_files, args=(device_name, job_id))
+    thread = threading.Thread(target=process_files_with_tool_repack, args=(device_name, job_id))
     thread.daemon = True
     thread.start()
     
@@ -411,10 +413,9 @@ def download_result(job_id):
         return "File not found", 404
     
     filename = status['filename']
-    file_path = os.path.join(TEMP_DIR, job_id, filename)
-    job_dir = os.path.join(TEMP_DIR, job_id)
+    file_path = Path(TEMP_DIR) / job_id / filename
     
-    if not os.path.exists(file_path):
+    if not file_path.exists():
         return "File not found", 404
     
     try:
@@ -426,7 +427,8 @@ def download_result(job_id):
             import time
             time.sleep(2)  # Wait a bit to ensure download started
             try:
-                if os.path.exists(job_dir):
+                job_dir = Path(TEMP_DIR) / job_id
+                if job_dir.exists():
                     shutil.rmtree(job_dir, ignore_errors=True)
                     print(f"✅ Cleaned up temporary files for job: {job_id}")
                 if job_id in processing_status:
@@ -450,16 +452,16 @@ def cleanup_old_files():
     while True:
         try:
             now = time.time()
-            if os.path.exists(TEMP_DIR):
-                for job_id in os.listdir(TEMP_DIR):
-                    job_path = os.path.join(TEMP_DIR, job_id)
-                    if os.path.isdir(job_path):
+            temp_dir = Path(TEMP_DIR)
+            if temp_dir.exists():
+                for job_id in temp_dir.iterdir():
+                    if job_id.is_dir():
                         # Remove directories older than 1 hour
-                        if now - os.path.getctime(job_path) > 3600:
-                            shutil.rmtree(job_path, ignore_errors=True)
-                            if job_id in processing_status:
-                                del processing_status[job_id]
-                            print(f"🧹 Cleaned up old job: {job_id}")
+                        if now - job_id.stat().st_ctime > 3600:
+                            shutil.rmtree(job_id, ignore_errors=True)
+                            if job_id.name in processing_status:
+                                del processing_status[job_id.name]
+                            print(f"🧹 Cleaned up old job: {job_id.name}")
         except Exception as e:
             print(f"⚠️ Error in cleanup: {e}")
         time.sleep(3600)  # Check every hour
