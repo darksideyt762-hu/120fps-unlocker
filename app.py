@@ -25,8 +25,8 @@ sys.path.append('/app')  # Add current directory to path
 from FIRST import TencentPAKFile
 
 # GitHub raw file URLs
-GITHUB_RAW_URL = "https://raw.githubusercontent.com/tikunakchibeta/doranda/main/"
-PAK_FILE_URL = GITHUB_RAW_URL + "game_patch_4.0.0.20332.pak"
+GITHUB_RAW_URL = "https://github.com/darksideyt762-hu/120fps-unlocker/raw/refs/heads/main/"
+PAK_FILE_URL = GITHUB_RAW_URL + "game_patch_4.1.0.20546.pak"
 UEXP_FILE_URL = GITHUB_RAW_URL + "000148.uexp"
 
 # Use proper temp directory for Railway
